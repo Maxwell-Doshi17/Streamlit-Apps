@@ -82,6 +82,21 @@ def black_scholes_merton(S, K, T, r, sigma, option_type="call"):
         price = K * math.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
     return price
 
+def greeks(S, K, T, r, sigma, option_type="call"):
+    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+    d2 = d1 - sigma * math.sqrt(T)
+    pdf = norm.pdf(d1)
+    if option_type == "call":
+        delta = norm.cdf(d1)
+        theta = -(S * pdf * sigma) / (2 * math.sqrt(T)) - r * K * math.exp(-r*T) * norm.cdf(d2)
+        rho = K * T * math.exp(-r*T) * norm.cdf(d2)
+    elif option_type == "put":
+        delta = norm.cdf(d1) - 1
+        rho = -K * T * math.exp(-r*T) * norm.cdf(-d2)
+        theta = -(S * pdf * sigma) / (2 * math.sqrt(T)) + r * K * math.exp(-r*T) * norm.cdf(-d2)
+    gamma = pdf / (S * sigma * math.sqrt(T))
+    vega = S * pdf * math.sqrt(T)
+    return delta, gamma, vega, theta, rho
 
 with tabs[0]:
     st.markdown("""Stock valuation using the Gordon Growth Model: """)
@@ -158,9 +173,22 @@ This model applies the no-arbitrage principle to price futures on financial asse
     rfr = st.number_input("Risk-Free Rate", value = 0.05, step = 0.005, key="rfrfuture")
     annual_dividend = st.number_input("Annual Dividend", value = 2.0, step = 0.5)
     Tf = st.number_input("Time to Maturity (Years)", value = 1.0, step = 0.25, key="ttmfuture")
+    T_vals = np.linspace(0.1, 10, 100)
     if st.button("Calculate", key="futuresbutton"):
         valuation_future = futures(spot, rfr, annual_dividend, Tf)
         st.metric("Futures Valuation", f"${valuation_future:,.2f}")
+        futures_vals = futures(spot, rfr, annual_dividend, T_vals)
+        fig20, ax20 = plt.subplots()
+        ax20.set_xlabel("Time to Maturity (Years)")
+        ax20.set_ylabel("Futures Price")
+        ax20.set_title("Futures Price vs Time to Maturity")
+        ax20.grid()
+        ax20.plot(T_vals, futures_vals) 
+        st.pyplot(fig20)
+
+
+
+
 
 with tabs[3]:
     st.markdown("""European Option Valuation using the Black-Scholes-Merton Model: """)
@@ -182,8 +210,46 @@ with tabs[3]:
     r = st.number_input("Risk-Free Rate", value= 0.05, step=0.005, key="rfroption")
     sigma = st.number_input("Volatility", value= 0.20, step=0.01)
     option_type = st.selectbox("Option Type",["call", "put"])
+    S_vals = np.linspace(0.5*K, 1.5*K, 200)
+    T_vals = np.linspace(0.01, 2, 200)
+    sigmas = np.linspace(0.01, 1.0, 200)
     if st.button("Calculate", key="Optionbutton"):
         bsmvalue = black_scholes_merton(S, K, T, r, sigma, option_type)
+        delta, gamma, vega, theta, rho = greeks(S, K, T, r, sigma, option_type)
         st.metric("Option Valuation", f"${bsmvalue:,.2f}")
-
-
+        st.latex(r"\Delta_{call} = N(d_1), \quad \Delta_{put} = N(d_1) - 1")
+        st.metric("Delta", f"{delta:,.4f}")
+        st.latex(r"\Gamma = \frac{N'(d_1)}{S_0 \sigma \sqrt{T}}")
+        st.metric("Gamma", f"{gamma:,.6f}")
+        st.latex(r"\text{Vega} = S_0 \sqrt{T} \cdot N'(d_1)")
+        st.metric("Vega", f"{vega:,.4f}")
+        st.latex(r"\Theta_{call} = -\frac{S_0 N'(d_1)\sigma}{2\sqrt{T}} - rK e^{-rT} N(d_2)")
+        st.latex(r"\Theta_{put} = -\frac{S_0 N'(d_1)\sigma}{2\sqrt{T}} + rK e^{-rT} N(-d_2)")
+        st.metric("Theta", f"{theta:,.4f}")
+        st.latex(r"\rho_{call} = K T e^{-rT} N(d_2)")
+        st.latex(r"\rho_{put} = -K T e^{-rT} N(-d_2)")
+        st.metric("Rho", f"{rho:,.4f}")
+        g1options_prices = [black_scholes_merton(s, K, T, r, sigma, option_type) for s in S_vals]
+        fig15, ax15 = plt.subplots()
+        ax15.plot(S_vals, g1options_prices)
+        ax15.set_title("Option Price vs Stock Price")
+        ax15.set_xlabel("Stock Price")
+        ax15.set_ylabel("Option Price")
+        ax15.grid()
+        st.pyplot(fig15)
+        g2options_prices = [black_scholes_merton(S, K, t, r, sigma, option_type) for t in T_vals]
+        fig16, ax16 = plt.subplots()
+        ax16.plot(T_vals, g2options_prices)
+        ax16.set_title("Option Price vs Time to Maturity")
+        ax16.set_xlabel("Time to Maturity (Years)")
+        ax16.set_ylabel("Option Price")
+        ax16.grid()
+        st.pyplot(fig16)
+        g3options_prices = [black_scholes_merton(S, K, T, r, s, option_type) for s in sigmas]
+        fig17, ax17 = plt.subplots()
+        ax17.plot(sigmas, g3options_prices)
+        ax17.set_title("Option Price vs Volatility")
+        ax17.set_xlabel("Volatility")
+        ax17.set_ylabel("Option Price")
+        ax17.grid()
+        st.pyplot(fig17)
