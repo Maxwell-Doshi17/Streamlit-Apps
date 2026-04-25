@@ -5,4 +5,5 @@ pandas
 seaborn
 scikit-learn
 requests
+geopandas
 statsmodels
