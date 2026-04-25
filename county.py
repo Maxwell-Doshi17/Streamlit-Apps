@@ -3,7 +3,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import streamlit as st
 #Full dataset with storm events from 2015-2025
-counties = pd.read_csv("illinois_counties.csv")
+counties = pd.read_csv("data/illinois_counties.csv")
 year2025 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2025_c20250818.csv")
 year2024 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20250818.csv")
 year2023 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2023_c20250731.csv")
@@ -58,7 +58,7 @@ def convert_damage(value):
         else:
             return int(float(value))
     return value  
-illinois_map = gpd.read_file("IL_BNDY_County_Py[1].shp")
+illinois_map = gpd.read_file("data/IL_BNDY_County_Py[1].shp")
 illinois_map['county'] = clean_county(illinois_map['COUNTY_NAM'])
 illinois2['DAMAGE_PROPERTY'] = illinois2['DAMAGE_PROPERTY'].apply(convert_damage)
 illinois2['DAMAGE_CROPS'] = illinois2['DAMAGE_CROPS'].apply(convert_damage)

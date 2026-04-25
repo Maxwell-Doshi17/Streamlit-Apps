@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-df = pd.read_csv("geo-capitals_EN.csv")
+df = pd.read_csv("data/geo-capitals_EN.csv")
 
 def generate_question():
     options = df.sample(4, replace=False)

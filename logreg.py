@@ -55,7 +55,7 @@ This is why logistic regression produces an **S-shaped curve** for probability i
 uploaded_file = st.file_uploader("Upload your dataset (CSV)", type=["csv"])
 
 def get_default_data():
-    return pd.read_csv("nba_rookie.csv")
+    return pd.read_csv("data/nba_rookie.csv")
 
 st.markdown("## Step 1: Load the data")
 st.markdown("""
