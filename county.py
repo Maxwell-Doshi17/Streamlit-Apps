@@ -2,19 +2,27 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import streamlit as st
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+@st.cache_data
+def load_csv(filename):
+    return pd.read_csv(BASE_DIR / "data" / filename)
+@st.cache_data
+def load_geo(filename):
+    return gpd.read_file(BASE_DIR / "data" / filename)
 #Full dataset with storm events from 2015-2025
-counties = pd.read_csv("data/illinois_counties.csv")
-year2025 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2025_c20250818.csv")
-year2024 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20250818.csv")
-year2023 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2023_c20250731.csv")
-year2022 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2022_c20250721.csv")
-year2021 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2021_c20250520.csv")
-year2020 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2020_c20250702.csv")
-year2019 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2019_c20250520.csv")
-year2018 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2018_c20250520.csv")
-year2017 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2017_c20250520.csv")
-year2016 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2016_c20250818.csv")
-year2015 = pd.read_csv("data/StormEvents_details-ftp_v1.0_d2015_c20250818.csv")
+counties = load_csv("illinois_counties.csv")
+year2025 = load_csv("StormEvents_details-ftp_v1.0_d2025_c20250818.csv")
+year2024 = load_csv("StormEvents_details-ftp_v1.0_d2024_c20250818.csv")
+year2023 = load_csv("StormEvents_details-ftp_v1.0_d2023_c20250731.csv")
+year2022 = load_csv("StormEvents_details-ftp_v1.0_d2022_c20250721.csv")
+year2021 = load_csv("StormEvents_details-ftp_v1.0_d2021_c20250520.csv")
+year2020 = load_csv("StormEvents_details-ftp_v1.0_d2020_c20250702.csv")
+year2019 = load_csv("StormEvents_details-ftp_v1.0_d2019_c20250520.csv")
+year2018 = load_csv("StormEvents_details-ftp_v1.0_d2018_c20250520.csv")
+year2017 = load_csv("StormEvents_details-ftp_v1.0_d2017_c20250520.csv")
+year2016 = load_csv("StormEvents_details-ftp_v1.0_d2016_c20250818.csv")
+year2015 = load_csv("StormEvents_details-ftp_v1.0_d2015_c20250818.csv")
 storm_full = pd.concat([year2015, year2016, year2017, year2018, year2019, year2020, year2021, year2022, year2023, year2024, year2025], ignore_index=True)
 #Clean data so county names match 
 counties['county'] = (
@@ -58,7 +66,7 @@ def convert_damage(value):
         else:
             return int(float(value))
     return value  
-illinois_map = gpd.read_file("data/IL_BNDY_County_Py[1].shp")
+illinois_map = load_geo("IL_BNDY_County_Py[1].shp")
 illinois_map['county'] = clean_county(illinois_map['COUNTY_NAM'])
 illinois2['DAMAGE_PROPERTY'] = illinois2['DAMAGE_PROPERTY'].apply(convert_damage)
 illinois2['DAMAGE_CROPS'] = illinois2['DAMAGE_CROPS'].apply(convert_damage)
