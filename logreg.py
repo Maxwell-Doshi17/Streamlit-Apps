@@ -6,7 +6,7 @@ import seaborn as sns
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 import streamlit as st
-st.set_page_config(page_title="Logistic Regression")
+st.set_page_config(page_title="Logistic Regression Walkthrough")
 
 st.title("Simple Logistic Regression Walkthrough")
 
