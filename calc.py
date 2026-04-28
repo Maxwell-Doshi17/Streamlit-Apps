@@ -2,70 +2,66 @@ import streamlit as st
 import numpy as np
 import sympy as sp
 import plotly.graph_objects as go
-from scipy.integrate import quad
+
+
 
 x = sp.symbols('x')
 
-st.title("Calculus \"Disk Method\" Visualizer")
-st.latex(r"V = \int_a^b dV = \int_a^b \pi [f(x)]^2 \, dx")
-st.markdown("""The disk method calculates the volume of a solid of revolution 
-            by integrating the area of circular cross-sections perpendicular 
-            to the axis of rotation.""")
+def taylor_series(func, a, n):
+    series = 0
+    for i in range(n+1):
+        term = (func.diff(x, i).subs(x, a) / sp.factorial(i)) * (x - a)**i
+        series += term
+    return sp.simplify(series)
+
+st.title("🧠 Taylor Series Visualizer")
+
 # Function selection
-func_option = st.selectbox("Choose a function", ["x", "x^2", "x^3", "cos(x)", "sin(x)", "tan(x)", 
-                                                 "csc(x)", "cot(x)", "sec(x)", "sqrt(x)",
-                                                 "1/x", "1/(x^2)", "e^x", "e^-x"])
+func_option = st.selectbox("Choose a function", ["sin(x)", "cos(x)", "exp(x)", "log(1+x)"])
 
 func_map = {
-    "x" : x,
-    "x^2": x**2,
-    "x^3" : x**3,
-    "cos(x)" : sp.cos(x),
-    "csc(x)" : sp.csc(x),
-    "1/x" : 1/x,
-    "1/(x^2)" : 1/(x**2),
-    "e^x" : sp.exp(x),
-    "e^-x": sp.exp(-x),
-    "sec(x)" : sp.sec(x),
-    "cot(x)" : sp.cot(x),
     "sin(x)": sp.sin(x),
-    "tan(x)" : sp.tan(x),
-    "sqrt(x)": sp.sqrt(x)
+    "cos(x)": sp.cos(x),
+    "exp(x)": sp.exp(x),
+    "log(1+x)": sp.log(1+x)
 }
 
 f = func_map[func_option]
 
 # Inputs
-a, b = st.slider("Interval [a, b]", 0.0, 5.0, (0.0, 2.0))
-resolution = st.slider("Resolution", 20, 100, 50)
+a = st.slider("Expansion point (a)", -2.0, 2.0, 0.0)
+n = st.slider("Degree (n)", 1, 10, 3)
+x_min, x_max = st.slider("x range", -5.0, 5.0, (-2.0, 2.0))
 
-# Convert to numeric
+# Compute Taylor
+Tn = taylor_series(f, a, n)
+
+# Convert to numeric functions
 f_lamb = sp.lambdify(x, f, "numpy")
+Tn_lamb = sp.lambdify(x, Tn, "numpy")
 
-# Volume calculation
-volume, _ = quad(lambda t: np.pi * (f_lamb(t)**2), a, b)
+x_vals = np.linspace(x_min, x_max, 400)
 
-st.subheader(f"Volume ≈ {volume:.4f}")
+y_true = f_lamb(x_vals)
+y_approx = Tn_lamb(x_vals)
 
-x_vals = np.linspace(a, b, 200)
-y_vals = f_lamb(x_vals)
+# Plot
+fig = go.Figure()
 
-fig2d = go.Figure()
-fig2d.add_trace(go.Scatter(x=x_vals, y=y_vals, name="f(x)"))
+fig.add_trace(go.Scatter(x=x_vals, y=y_true, name="f(x)"))
+fig.add_trace(go.Scatter(x=x_vals, y=y_approx, name=f"Taylor (n={n})"))
 
-st.plotly_chart(fig2d)
+st.plotly_chart(fig)
 
-theta = np.linspace(0, 2*np.pi, resolution)
-x_vals = np.linspace(a, b, resolution)
+# Error
+error = y_true - y_approx
 
-X, Theta = np.meshgrid(x_vals, theta)
-Y = f_lamb(X) * np.cos(Theta)
-Z = f_lamb(X) * np.sin(Theta)
+fig2 = go.Figure()
+fig2.add_trace(go.Scatter(x=x_vals, y=error, name="Error"))
 
-fig3d = go.Figure(data=[
-    go.Surface(x=X, y=Y, z=Z)
-])
+st.subheader("Error Graph")
+st.plotly_chart(fig2)
 
-fig3d.update_layout(title="3D Solid of Revolution")
-
-st.plotly_chart(fig3d)
+# Show equation
+st.subheader("Taylor Polynomial")
+st.latex(sp.latex(Tn))
